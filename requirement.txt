@@ -1,0 +1,9 @@
+pandas
+numpy
+tqdm
+gcastle==1.0.4rc1
+scipy
+xgboost
+networkx 
+pydot
+numba
