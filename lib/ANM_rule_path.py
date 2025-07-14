@@ -75,7 +75,7 @@ def descendent(G,i,des,bi_direct=False,include_missing_indicator=False):
     return des
 
 @numba.njit
-def is_cycle(G, i, j, path=[]):  # 判断是否必然形成环
+def is_cycle(G, i, j, path=[]):
     if G[i, j] != 1:
         return False
     path.append(i)
@@ -147,9 +147,9 @@ def filter_related_path(G,paths,all_bi_edges,path_id=-1):
             for x in pa_i:
                 if (x,i) not in all_bi_edges and (i,x) not in all_bi_edges:
                     continue
-                # 只要任意一个x作为parent使得不可识别，都是需要保留的
-                # 如果对于所有x作为parent都不会导致不可识别，则可删除
-                # x 不可以在p中出现，否则会形成环
+                # As long as any x has a parent that makes it nonidentifiable, it needs to be retained
+                # If it does not cause nonidentifiable for all x as parents, it can be deleted
+                # x cannot appear in p, otherwise it will form a cycle
                 if x not in p and (x+n==p[-1] or i+n==p[-1]):
                     affect_identifiability = True
                     break
@@ -193,7 +193,7 @@ def RULE1(G,paths,all_bi_edges,i,j):
     G[i, j] = 0  # j->i
     G[j, i] = 1  # j->i
     j2i = is_cycle(G, j, i, List.empty_list(types.int64))
-    if i2j:  # 如果i->j必然形成环，则意味着j->i成立
+    if i2j:  
         G[j, i] = 1
         G[i, j] = 0
         changed=True
@@ -359,7 +359,6 @@ def filter_cycle_path(G,paths,i,j):
     ancestor(G,i,anc,bi_direct=False)
     for j in des:
         if i not in child(G,j):
-            # 如果i和j是相邻的那这个不能算是环
             for node_path in paths:
                 pop_list=[]
                 for idx,p in enumerate(node_path):
