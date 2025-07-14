@@ -47,7 +47,7 @@ def randomMissGraph(dag, missingness='SMAR', rom=1 / 3, num_self_node=2, randomS
             if len(childrens) > 0 and len(neighbours) == 2:
                 for two_neighbour in combinations(neighbours, 2):
                     if nx.d_separated(dag,set([two_neighbour[0]]), set([two_neighbour[1]]), set([var])):
-                        # 遍历graph的每个结点，如果该结点存在两个邻居，且被该结点d分离，则加入到候选self missing结点中。
+                        # Traverse each node of the graph. If the node has two neighbors separated by the node d, add them to the candidate self-missing nodes.
                         candidate_self_vars_miss.append(var)
 
         if len(candidate_self_vars_miss) < num_self_node:
@@ -58,20 +58,20 @@ def randomMissGraph(dag, missingness='SMAR', rom=1 / 3, num_self_node=2, randomS
         for i in range(num_self_node):
             self_node.append(candidate_self_vars_miss[i])
         for var_miss in self_node:
-            cause_dict[str(var_miss)] = [str(var_miss)] # 这是缺失的selfmasking变量，他的parent是他自己
+            cause_dict[str(var_miss)] = [str(var_miss)] # This is the self masking variable where its parent is itself
 
         # find mar
-        if num_other_vars_miss >= 1: # 如果还需要除了selfmasking以外的缺失变量
-            vars_complete = list(sorted(set(dag.nodes).difference(set(self_node)))) # 剩余变量
+        if num_other_vars_miss >= 1: # If need missing variables other than self masking
+            vars_complete = list(sorted(set(dag.nodes).difference(set(self_node)))) # Remaining variables
             vars_miss = randomState.choice(vars_complete, num_other_vars_miss).tolist()          # Randomly select mar of variables as missing variables
-            vars_complete = [v for v in vars_complete if v not in vars_miss] # 新挑的剩余变量
-            for var in vars_miss: # 遍历R_i
-                children = list(dag.successors(var)) # 找到V_i非self masking缺失变量中的孩子结点
-                children = [v for v in list(children) if v in vars_complete]  # 找到V_i非self masking缺失变量中的非缺失孩子结点
-                if randomState.uniform(0, 1) > 0.2: # 以0.2的概率设置为随机缺失，否则就是完全随机缺失
-                    if len(children) > 0: # 如果V_i存在非缺失孩子，则以一定概率选择其中一个，将其设置为R_i的parent
+            vars_complete = [v for v in vars_complete if v not in vars_miss] # Newly filtered remaining variables
+            for var in vars_miss: # Iterate through R_i
+                children = list(dag.successors(var)) # # Find child nodes of V_i (non-self-masking missing variables)
+                children = [v for v in list(children) if v in vars_complete]  # # Find non-self missing child nodes of V_i
+                if randomState.uniform(0, 1) > 0.2: # With 0.2 probability set as random missing, otherwise completely random missing
+                    if len(children) > 0: # If V_i has non-missing children, select one as R_i's parent with certain probability
                         cause_dict[str(var)] = [str(var) for var in randomState.choice(children, 1).tolist()]
-                    else: # 如果V_i不存在非缺失孩子，则随机选择没缺失的变量，将其设置为R_i的parent
+                    else: # If V_i has no non-missing children, randomly select a non-missing variable as R_i's parent
                         cause_dict[str(var)] = [str(var) for var in randomState.choice(vars_complete, 1).tolist()]
                 else:
                     cause_dict[str(var)] = []
@@ -111,7 +111,7 @@ def randomMissGraph(dag, missingness='SMAR', rom=1 / 3, num_self_node=2, randomS
             vars_complete = list(sorted(set(vars_complete).difference(set(candidate_other_vars_miss))))
             for var in candidate_other_vars_miss:
                 children = list(dag.successors(var)) # neighbour and Fully observable variable
-                if randomState.uniform(0, 1) > 1: # 这是MAR的
+                if randomState.uniform(0, 1) > 1: # MAR
                     children = [v for v in list(children) if v in vars_complete]
                     if len(children) > 0:
                         cause_dict[str(var)] = [str(var) for var in  randomState.choice(children, 1).tolist()]
@@ -173,21 +173,21 @@ def randomMARGraph(dag, rom=1 / 3, num_self_node=2, randomState=None):
     for var_miss in self_node:
         cause_dict[str(var_miss)] = [str(var_miss)]
     if num_other_vars_miss>0:
-        vars_complete = list(sorted(set(dag.nodes).difference(set(self_node))))  # 剩余变量
-        vars_miss = randomState.choice(vars_complete,num_other_vars_miss).tolist()  # Randomly select mar of variables as missing variables
-        vars_complete = [v for v in vars_complete if v not in vars_miss]  # 新挑的剩余变量
+        vars_complete = list(sorted(set(dag.nodes).difference(set(self_node)))) 
+        vars_miss = randomState.choice(vars_complete,num_other_vars_miss).tolist() 
+        vars_complete = [v for v in vars_complete if v not in vars_miss]  
 
-        for var in vars_miss:  # 遍历R_i
-            neighbours = list(dag.adj[var])  # 找到V_i非self masking缺失变量中的孩子结点
-            neighbours = [v for v in neighbours if v in vars_complete]  # 找到V_i非self masking缺失变量中的非缺失孩子结点
-            if randomState.uniform(0, 1) > 0.2:  # 以0.2的概率设置为随机缺失，否则就是完全随机缺失
-                if len(neighbours) > 0:  # 如果V_i存在非缺失孩子，则以一定概率选择其中一个，将其设置为R_i的parent
+        for var in vars_miss: 
+            neighbours = list(dag.adj[var])  
+            neighbours = [v for v in neighbours if v in vars_complete] 
+            if randomState.uniform(0, 1) > 0.2: 
+                if len(neighbours) > 0: 
                     cause_dict[str(var)] = [str(var) for var in randomState.choice(neighbours, 1).tolist()]
-                else:  # 如果V_i不存在非缺失孩子，则随机选择没缺失的变量，将其设置为R_i的parent
+                else:  
                     cause_dict[str(var)] = [str(var) for var in randomState.choice(vars_complete, 1).tolist()]
             else:
                 cause_dict[str(var)] = []
-    cause_dict=dict(sorted(cause_dict.items(), key=lambda x: int(x[0]))) # 让causa dict以确实变量index的顺序排列
+    cause_dict=dict(sorted(cause_dict.items(), key=lambda x: int(x[0]))) # sort variable
     return cause_dict
 
 def randomMNARGraph(dag, rom=1 / 3, num_self_node=2, randomState=None):
@@ -374,7 +374,7 @@ def DAG2ANME(G, cause_dict):
     return B_R_DAG
 
 def DAG2mDAG(G, cause_dict: dict):
-    "这个方法是将DAG转换padding后的图，然后再把多余的R（列为空）删除掉"
+    # This method converts the DAG into a padded graph and then deletes the redundant R (columns are empty)
     dim=len(G)
     G = np.pad(G, ((0, dim), (0, dim)), 'constant')
     R = np.zeros((dim * 2 , dim * 2), dtype= int)
